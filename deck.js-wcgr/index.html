@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=1024, user-scalable=no">
+
+	<title>Learning to Love JavaScript</title>
+	
+	<!-- Required stylesheet -->
+	<link rel="stylesheet" href="../core/deck.core.css">
+	
+	<!-- Extension CSS files go here. Remove or add as needed. -->
+	<link rel="stylesheet" href="../extensions/goto/deck.goto.css">
+	<link rel="stylesheet" href="../extensions/menu/deck.menu.css">
+	<link rel="stylesheet" href="../extensions/navigation/deck.navigation.css">
+	<link rel="stylesheet" href="../extensions/status/deck.status.css">
+	<link rel="stylesheet" href="../extensions/hash/deck.hash.css">
+	<link rel="stylesheet" href="../extensions/scale/deck.scale.css">
+
+	<!-- CODEMIRROR EXTENSION -->
+	<link rel="stylesheet" href="../extensions/codemirror/deck.codemirror.css">
+
+	<!--
+	Include your favorite CodeMirror syntax style:
+
+	Options are:
+
+	cobalt.css
+	default.css
+	elegant.css
+	lesser-dark.css
+	neat.css
+	night.css
+	-->
+	<link rel="stylesheet" href="../extensions/codemirror/themes/default.css">
+	<!-- END CODEMIRROR EXTENSION -->
+
+	<link rel="stylesheet" href="../extensions/console-notes/deck.console-notes.css">
+
+	<!-- Style theme. More available in /themes/style/ or create your own. -->
+	<link rel="stylesheet" href="../themes/style/swiss.css">
+	
+	<!-- Transition theme. More available in /themes/transition/ or create your own. -->
+	<link rel="stylesheet" href="../themes/transition/fade.css">
+	
+	<!-- Required Modernizr file -->
+	<script src="../modernizr.custom.js"></script>
+</head>
+<body class="deck-container">
+
+<!-- Set up -->
+
+
+<!-- Begin slides. Just make elements with a class of slide. -->
+
+<section class="slide">
+	<h2>Learning to Love JavaScript</h2>
+	<h4>Leverage the JavaScript libraries and APIs included in WordPress core to build rich, interactive user experiences on your sites.</h4>
+	<hr>
+	<div>
+		<div id="code-jb" name="code-jb" class="code" mode="javascript" style="display: none;" >
+var JeffBowen = (function() {
+	return function() {
+		return {
+			"WordPress": "jblz",
+			"Github": "jblz",
+			"Twitter": "@alapapa",
+			"Web": "http://get2see.me"
+		};
+	};
+})();
+
+wcgr( new JeffBowen() );
+		</div>
+	</div>
+	<div class="notes">
+* "Hi everyone.  My name is Jeff Bowen and I'm a Data Wrangler at Automattic.  I've worked on many features on WordPress.com including Blog Stats, Notifications, Follow Recommendations, & WordAds.  Recently, I've been writing a lot of JavaScript and am really enjoying it.  "
+* This talk is going to demonstrate how to leverage the JavaScript libraries and APIs included in WordPress core to build rich, interactive user experiences on your sites.
+* My slides are kinda code-heavy, so hopefully everybody can see ok.
+* Feel free to raise your hand if you have a question.
+
+* First thing's first, let's spend just a few minutes talking about how run JavaScript on your page in the first place.
+	</div>
+</section>
+
+
+<section class="slide">
+	<h2>Included Libraries</h2>
+	<h3>WordPress core comes with a pretty large arsenal of handy scripts and libraries.</h3>
+	<br />
+	<h4>Those I depend on most frequently include:</h4>
+	<ul>
+		<li>jQuery</li>
+		<li>underscore</li>
+		<li>backbone</li>
+	</ul>
+	<br />
+	<h3>Check out this Codex page to get a feel for what else is available out of the box</h3>
+	<p>
+		<a href="http://is.gd/wpDefaultScripts">http://is.gd/wpDefaultScripts</a><br />⬇<br />
+		<a href="http://codex.wordpress.org/Function_Reference/wp_enqueue_script#Default_Scripts_Included_and_Registered_by_WordPress">
+			http://codex.wordpress.org/Function_Reference/wp_enqueue_script#Default_Scripts_Included_and_Registered_by_WordPress
+		</a>
+	</p>
+	<div class="notes">
+	</div>
+</section>
+
+<section class="slide">
+	<h1>OK, so you're ready to start building that new feature...</h1>
+	<div class="notes">
+	</div>
+
+</section>
+
+<section class="slide">
+	<h2>It's tempting to jump right into your theme and just plop in a script tag:</h2>
+		<textarea id="code0" name="code0" class="code" mode="php" style="display: none;">
+		?>
+<script type="text/javascript">
+/**
+ * Awesomeness here
+ */
+</script>
+		<?php
+		</textarea><!--?>-->
+	<h4>...and go to town.</h4>
+</section>
+
+<section class="slide">
+	<h2>Resist!</h2>
+	<h4>In my opinion, it's usually better to build your client-side scripts into small, feature-based plugins. When you're not tightly-coupled to a theme:</h4>
+	<ul>
+		<li>You can move between themes with only minor, predictable impacts on your feature</li>
+		<li>It promotes separation of concerns</li>
+		<li>Templates with inline scripts are tough to read, debug, & test</li>
+		<li>If your scripts break, they're less likely to mess up the whole site</li>
+		<li>From a business perspective:
+			<ul>
+				<li>Market the functionality independent of any major (re)design work</li>
+				<li>Position it as an add-on module to larger projects</li>
+			</ul>
+		</li>
+	</ul>
+</section>
+
+<section class="slide">
+<h2>Let's take a look.</h2>
+<h3>Here's the skeleton of a "Hello World" WordPress plugin that includes your JavaScript file with an explicit dependency on jQuery:</h3>
+	<div>
+		<textarea id="code0" name="code0" class="code" mode="php" style="display: none;" globals="$">
+<?php
+
+/*
+ * Plugin Name: WCGR demo plugin by jblz
+ * Plugin URI: http://github.com/jblz/wcgr
+ * Description: Plugin that demonstrates concepts discussed at WCGR
+ * Author: jblz
+ * Version: 0.1
+ * Author URI: http://get2see.me
+ * License: GPL2+
+ */
+
+class WCGR_Demo {
+        const VERSION = '0.1';
+
+        static function enqueue_js() {
+                wp_register_script( 'wcgr-app',
+                	plugins_url() . '/wcgr/js/app.js',
+                	array( 'jquery' ),
+                	self::VERSION,
+                	true
+                );
+                wp_enqueue_script( 'wcgr-app' );
+        }
+
+}
+add_action( 'wp_enqueue_scripts', array( 'WCGR_Demo', 'enqueue_js' ) );
+		</textarea><!--?>-->
+	</div>
+<p>wp-content/plugins/wcgr/wcgr.php</p>
+</section>
+
+<section class="slide">
+<h2>Super-basic JavaScript for our Hello World:</h2>
+
+	<div>
+		<textarea id="code0" name="code0" class="code" mode="javascript" style="display: none;" globals="$">
+( function( $ ) {
+	$( document ).ready( function() {
+		$( '.hello' )
+			.css( {
+				'background-color': '#afafaf',
+				'padding': 20,
+				'height': 200
+			} )
+			.html( 'lorem ipsum' )
+		;
+	} );
+} )( jQuery );
+		</textarea>
+	</div>
+<p>wp-content/plugins/wcgr/js/app.js</p>
+</section>
+
+<section class="slide">
+<h2>And this is what it does:</h2>
+<div style="height: 100%;">
+<iframe style="height: 100%; width: 100%;" src="http://localhost:8888/hi/"></iframe>
+</div>
+</section>
+
+<section class="slide">
+<h1>DOM Manipulated!</h1>
+</section>
+
+
+<section class="slide">
+<h1>data</h1>
+<h2>"You can have data without information, but you cannot have information without data."</h2>
+<h3>- Daniel Keys Moran
+<p>
+<img style="display:inline; margin: 10px" src="images/data.jpg" />
+<img style="display:inline; float:right;right:0px; margin: 10px" src="images/data2.jpg" />
+</p>
+</section>
+
+<section class="slide">
+<h2>The most basic way:</h2>
+<h3>Print a script tag and literally assign some data to global variables:</h3>
+<div>
+<textarea id="code1" name="code1" class="code" mode="php" style="display: none;" globals="$">
+<?php
+        static function print_inline_js() {
+                ?>
+                <script type="text/javascript">
+                        header = "That's no moon";
+                        planets = [
+                                'Alderaan',
+                                'Bespin',
+                                'Corellia',
+                                'Coruscant',
+                                'Dac',
+                                'Dantooine',
+                                'Felucia',
+                                'Geonosis',
+                                'Hoth',
+                                'Kamino',
+                                'Kashyyyk',
+                                'Korriban',
+                                'Manaan',
+                                'Naboo',
+                                'Nelvaan',
+                                'Tatooine',
+                                'Taris'
+                        ];
+                </script>
+                <?php
+        }
+</textarea><!--?>-->
+</div>
+</section>
+
+<section class="slide">
+<h2>PHP tags inside the RHS of a JS assignment:</h2>
+
+	<div>
+		<textarea id="code0" name="code0" class="code" mode="php" style="display: none;" globals="$">
+<?php
+        static function print_inline_js() {
+                $planets = self::get_planets();
+                rsort( $planets );
+                $header = strtoupper( self::get_header() );
+                ?>
+                <script type="text/javascript">
+                        header = "<?php echo esc_js( $header ); ?>";
+                        planets = <?php echo json_encode( $planets ); ?>;
+                </script>
+                <?php
+        }
+
+        static function get_header() {
+                return "That's no moon";
+        }
+
+        static function get_planets() {
+                return array(
+                        'Alderaan',
+                        'Bespin',
+                        '…',
+                        'Tatooine',
+                        'Taris',
+                );
+        }
+		</textarea><!--?>-->
+	</div>
+
+<div style="height: 100%;">
+</div>
+</section>
+
+<section class="slide">
+<h2>Retool wp_localize_script:</h2>
+<h5>It's not just for i18n, anymore:</h5>
+
+	<div>
+		<textarea id="code0" name="code0" class="code" mode="php" style="display: none;" globals="$">
+<?php
+        static function enqueue_js() {
+                wp_register_script( 'wcgr-app', plugins_url() . '/wcgr/js/app.js', array( 'jquery' ), self::VERSION, true );
+                wp_enqueue_script( 'wcgr-app' );
+
+                $planets = self::get_planets();
+                shuffle( $planets );
+                wp_localize_script( 'wcgr-app', 'wcgr', array(
+                        'header'  => __( "That's no moon" ),
+                        'planets' => $planets,
+                ) );
+        }
+		</textarea><!-- ?> -->
+	</div>
+	<div>
+		<h5>We access it like so:</h5>
+		<textarea id="code0" name="code0" class="code" mode="javascript" style="display: none;" globals="$">
+( function( $ ) {
+        $( document ).ready( function() {
+                $( '.wcgr' ).html(
+                        '<h2>' + wcgr.header + '</h2>' + wcgr.planets.join( '& ' )
+                );
+        } );
+} )( jQuery );		</textarea>
+	</div>
+
+</section>
+
+<section class="slide">
+<h1>AJAX</h1>
+</section>
+
+<section class="slide">
+<h2>It's pretty simple to set up an AJAX endpoint:</h2>
+	<div>
+		<textarea id="code0" name="code0" class="code" mode="php" style="display: none;" globals="$">
+<?php
+	static function init() {
+		add_action( 'wp_ajax_wcgr_get_data', array( 'WCGR_Demo', 'logged_in_ajax_handler' ) );
+		add_action( 'wp_ajax_nopriv_wcgr_get_data', array( 'WCGR_Demo', 'ajax_handler' ) );
+	}
+
+	static function logged_in_ajax_handler() {
+		self::ajax_handler( array(
+			'display_name' => wp_get_current_user()->display_name,
+		) );
+	}
+
+	static function ajax_handler( $args = array() ) {
+		$to_return = array();
+		if ( $_GET['key'] == 'planets' ) {
+			$planets = self::get_planets();
+			shuffle( $planets );
+
+			$to_return = array(
+				'header'  => self::get_header(),
+				'planets' => $planets,
+			);
+
+			if ( $args['display_name'] ) {
+				$to_return['display_name'] = $args['display_name'];
+			}
+		}
+
+		echo json_encode( $to_return );
+		die();
+	}
+
+} // End class WCGR_Demo
+add_action( 'init', array( 'WCGR_Demo', 'init' ) );
+</textarea><!--?>-->
+</div>
+</section>
+
+<section class="slide">
+<h2>And the client piece:</h2>
+	<div>
+		<textarea id="code0" name="code0" class="code" mode="javascript" style="display: none;" globals="$">
+$.ajax( {
+	'url': '/wp-admin/admin-ajax.php',
+	'data': {
+		'action': 'wcgr_get_data',
+		'key': 'planets'
+	}
+} );
+
+		</textarea>
+	</div>
+</section>
+
+
+<section class="slide">
+<h2>Widgets!</h2>
+<div style="height: 100%;">
+<iframe style="height: 100%; width: 100%;" src="http://localhost:8888/wp-admin/widgets.php"></iframe>
+</div>
+</section>
+
+<section class="slide">
+<h2>Putting it all together:</h2>
+<div style="height: 100%;">
+<iframe style="height: 100%; width: 100%;" src="http://localhost:8888/"></iframe>
+</div>
+</section>
+
+
+<section class="slide">
+<h2>Functions, Functions, Functions!</h2>
+<ul>
+<li>First-class</li>
+<li>Closures</li>
+<li>Prototypal Inheritance</li>
+<li>Callbacks & Promises</li>
+<li>Timeouts & Intervals</li>
+<li>Event listeners</li>
+<div style="height: 100%;">
+</div>
+</section>
+
+<section class="slide">
+	<h2>JavaScript functions are first-class citizens</h2>
+	<h3>That means you can assign them to a variable.</h3>
+	<h4>And just like any other variable:
+		<ul><li>You can pass them as arguments to functions</li>
+			<li>return them from functions</li>
+		</ul>
+	</h4>
+</section>
+
+<section class="slide">
+	<h2>Closures</h2>
+	<div>
+		<textarea id="code0" name="code0" class="code" mode="javascript" style="display: none;" globals="$">
+var distance = 18;
+var standardKesselRun = 18;
+( function() {
+	var distance = 11.5;
+
+	var makeKesselRun = function( parsecs ) {
+		if ( parsecs >=  standardKesselRun )
+			return 'Ho Hum';
+
+		if ( parsecs < 18 && parsecs >= 12 )
+			return 'Seasoned Spice Smuggler';
+
+		return 'Han, old buddy, do you read me?';
+	};
+
+	makeKesselRun( distance ); // returns 'Han, old buddy, do you read me?'
+} )();
+
+		</textarea>
+	</div>
+</section>
+
+<section class="slide">
+	<h2>"Private" variables</h2>
+	<div>
+		<textarea id="code0" name="code0" class="code" mode="javascript" style="display: none;" globals="$">
+( function() {
+	var standardKesselRun = 18;
+
+	var Ship = ( function( Ship ) {
+		var kesselRun;
+		Ship = function( _kesselRun ) {
+			kesselRun = _kesselRun  || standardKesselRun;
+		};
+
+		Ship.prototype.getKesselRun = function() { return kesselRun; }
+		return Ship;
+	} )( Ship );
+
+	var millenniumFalcon = new Ship( 11.5 );
+	var otherShip = new Ship();
+	millenniumFalcon.getKesselRun(); // returns 11.5, but millenniumFalcon.kesselRun is undefined
+
+	Ship.prototype.jumpToHyperspace = function() { return 'woosh!'; };
+} )();
+
+		</textarea>
+	</div>
+</section>
+
+<section class="slide">
+	<h2>Callbacks & Promises</h2>
+	<h3>Two sides of the same async coin</h3>
+	<h4><ul>
+		<li>Callbacks are functions that you attach to other functions which they run upon completion</li>
+		<li>Deferred functions that return a promise keep running and other code can act on the resolution of that promise</li>
+	</ul></h4> 
+
+</section>
+
+<section class="slide">
+	<h2>Events</h2>
+	<div>
+		<textarea id="code99" name="code99" class="code" mode="javascript" style="display: none;" globals="$">
+$(window).on( 'blasterFire', function( event, where ) {
+	console.log( 'we heard blaster fire in ' + where );
+	console.log( "tk421, why aren't you at your post?" );
+} );
+		</textarea>
+	<h3>Then in some other code:</h3>
+		<textarea id="code9" name="code9" class="code" mode="javascript" style="display: none;" globals="$">
+$(window).trigger( 'blasterFire', [ 'Detention Block AA-23' ] );
+		</textarea>
+</section>
+
+<section class="slide">
+	<h2>Timeouts & Intervals</h2>
+	<div>
+		<textarea id="code99" name="code99" class="code" mode="javascript" style="display: none;" globals="$">
+var setWidthTimeout, setWidth;
+setWidth = function() {
+	clearTimeout( setWidthTimeout );
+	setWidthTimeout = setTimeout( function() {
+		actuallySetWidth();
+	}, 100 );
+};
+
+
+
+
+$(window).on( 'resize.wcgr', function() {
+	setWidth();
+} );
+		</textarea>
+	</div>
+</section>
+
+<section class="slide">
+	<h2>Other nifty tools</h2>
+	<h3><ul>
+		<li>Backbone / Underscore</li>
+		<li>CoffeeScript</li>
+		<li>Grunt</li>
+		<li>Node cluster module</li>
+	</ul></h3>
+</section>
+
+<section class="slide">
+	<h1>Thanks!</h1>
+	<h2>Questions?</h2>
+	<h3>Jeff Bowen - jblz - @alapapa</h3>
+</section>
+
+
+<!--
+<section class="slide">
+	<h1>Here</h1>
+	<h2>Here2</h2>
+	<h3>Here3</h3>
+	<h4>Here4</h4>
+</section>
+-->
+
+
+
+<!-- End slides. -->
+
+
+<!-- Begin extension snippets. Add or remove as needed. -->
+
+<!-- deck.navigation snippet -->
+<a href="#" class="deck-prev-link" title="Previous">&#8592;</a>
+<a href="#" class="deck-next-link" title="Next">&#8594;</a>
+
+<!-- deck.status snippet -->
+<p class="deck-status">
+	<span class="deck-status-current"></span>
+	/
+	<span class="deck-status-total"></span>
+</p>
+
+<!-- deck.goto snippet -->
+<form action="." method="get" class="goto-form">
+	<label for="goto-slide">Go to slide:</label>
+	<input type="text" name="slidenum" id="goto-slide" list="goto-datalist">
+	<datalist id="goto-datalist"></datalist>
+	<input type="submit" value="Go">
+</form>
+
+<!-- deck.hash snippet -->
+<a href="." title="Permalink to this slide" class="deck-permalink">#</a>
+
+<!-- End extension snippets. -->
+
+
+<!-- Required JS files. -->
+<script src="../jquery-1.7.2.min.js"></script>
+<script src="../core/deck.core.js"></script>
+
+<!-- Extension JS files. Add or remove as needed. -->
+<script src="../core/deck.core.js"></script>
+<script src="../extensions/hash/deck.hash.js"></script>
+<script src="../extensions/menu/deck.menu.js"></script>
+<script src="../extensions/goto/deck.goto.js"></script>
+<script src="../extensions/status/deck.status.js"></script>
+<script src="../extensions/navigation/deck.navigation.js"></script>
+<script src="../extensions/scale/deck.scale.js"></script>
+
+	<!-- CODEMIRROR EXTENSION -->
+	<!-- Base codemiror code -->
+	<script src="../extensions/codemirror/codemirror.js"></script>
+
+	<!-- Syntax highlighting Modes -->
+
+	<!-- javascript -->
+	<script src="../extensions/codemirror/mode/javascript/javascript.js"></script>
+
+	<!-- html mode (note html mode requires xml, css and javascript) -->
+	<script src="../extensions/codemirror/mode/xml/xml.js"></script>
+	<script src="../extensions/codemirror/mode/css/css.js"></script>
+	<script src="../extensions/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+
+	<script src="../extensions/codemirror/mode/clike/clike.js"></script>
+	<script src="../extensions/codemirror/mode/php/php.js"></script>
+	<script src="../extensions/codemirror/mode/coffeescript/coffeescript.js"></script>
+
+	<!-- Plugin code -->
+	<script src="../extensions/codemirror/deck.codemirror.js"></script>
+
+	<script src="../extensions/console-notes/deck.console-notes.js"></script>
+	<!-- END CODEMIRROR EXTENSION -->
+
+<!-- Initialize the deck. You can put this in an external file if desired. -->
+<script>
+	$(function() {
+		$.deck('.slide');
+	});
+</script>
+</body>
+</html>

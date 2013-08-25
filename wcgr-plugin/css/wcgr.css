@@ -1,0 +1,14 @@
+.lightsabers, .wcgr {
+	transition: height 200ms ease;
+	min-height: 200px;
+}
+
+.loading {
+	opacity: 0.5;
+	background-image: url( '/wp-content/plugins/wcgr/images/loading.gif' );
+	background-size: 32px;
+	display: inline-block;
+	height: 32px;
+	width: 32px;
+	margin: 128px 64px;
+}
